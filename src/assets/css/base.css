@@ -1,0 +1,121 @@
+/* 初期設定 start */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+body {
+  overflow: visible;
+  overflow-x: hidden;
+  font-family: "Noto Sans JP", sans-serif;
+  font-weight: 500;
+  text-align: justify;
+}
+main {
+  position: relative;
+  display: block;
+}
+div,
+input,
+textarea,
+main,
+img,
+a {
+  box-sizing: border-box;
+}
+img {
+  width: auto;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+a,
+button {
+  transition: opacity 0.3s;
+  text-decoration: none;
+}
+a:hover,
+button:hover {
+  opacity: 0.7;
+  cursor: pointer;
+}
+ul {
+  padding: 0;
+  margin: 0;
+}
+li {
+  position: relative;
+  list-style: none;
+  margin-left: 10px;
+  margin-bottom: 15px;
+}
+button {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  font-family: "Noto Sans JP", sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin: 0;
+}
+input,
+textarea {
+  font-family: "Noto Sans JP", sans-serif;
+  font-weight: 500;
+}
+textarea {
+  overflow: hidden;
+  resize: none;
+}
+/* 初期設定 end */
+
+.w-1000 {
+  max-width: 1000px;
+  width: 100%;
+  padding: 0 20px;
+  margin: auto;
+}
+.in-bl {
+  display: inline-block;
+}
+
+/* ヘッダー start */
+header {
+  margin-bottom: 40px;
+}
+.header-container {
+  border-bottom: 2px solid #000;
+  padding: 8px;
+  padding-left: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+.header-container h1 {
+  font-size: 32px;
+}
+.header-container a {
+  color: #000;
+}
+.header-container button {
+  color: #000;
+  font-size: 16px;
+  width: 100px;
+  transition: 0.3s all;
+}
+.header-container button:hover {
+  opacity: 1;
+  background: rgba(95, 99, 104, 0.157);
+}
+@media (max-width: 699px) {
+  .header-container h1 {
+    font-size: 28px;
+  }
+}
+/* ヘッダー end */
