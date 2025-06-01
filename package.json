@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "axios": "^1.9.0",
     "firebase": "^9.22.2",
     "swiper": "^11.1.5",
     "vue": "^3.3.4",
