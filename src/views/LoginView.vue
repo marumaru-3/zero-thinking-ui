@@ -1,64 +1,44 @@
 <script setup>
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-} from "firebase/auth"
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import api from "@/libs/api";
+
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
 const email = ref("");
 const password = ref("");
-// ログインしているユーザーデータ
-const currentUser = ref("")
 
-const router = useRouter()
+const router = useRouter();
 
 // パスワードの表示・非表示
-const show = ref(false)
+const show = ref(false);
 
 // ログイン出来なかったときのメッセージ
-const noLoginMessage = ref("")
+const noLoginMessage = ref("");
 
 // 次のフォーム(パスワード)にフォーカスを当てる
 const nextFocus = () => {
-    document.querySelector('#password').focus();
-}
+  document.querySelector("#password").focus();
+};
 
 // サインイン処理
-const signIn = () => {
+const signIn = async () => {
   // メールアドレスとパスワードが入力されているかを確認
-  if (email.value == "" || password.value == "") return;
-  const auth = getAuth();
-  signInWithEmailAndPassword(auth, email.value, password.value)
-    .then((userCredential) => {
-      // 成功時処理
-      const user = userCredential.user;
-      // console.log(user);
-      // ホーム画面にリダイレクト
-      router.push("/");
-    })
-    .catch((error) => {
-      // 失敗時処理
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      console.log(errorCode, errorMessage);
+  if (!email.value || !password.value) return;
 
-      noLoginMessage.value = 'メールアドレスもしくはパスワードが違います。'
+  try {
+    const res = await api.post("/api/login", {
+      email: email.value,
+      password: password.value,
     });
-}
 
-onMounted(() => {
-  const auth = getAuth();
-  // ログインしているユーザーを取得する
-  onAuthStateChanged(auth, (user) => {
-    if (user != null) {
-      currentUser.value = user;
-    } else {
-      currentUser.value = null;
-    }
-  });
-})
+    const token = res.data.token;
+    localStorage.setItem("token", token);
+
+    router.push("/");
+  } catch (error) {
+    noLoginMessage.value = "メールアドレスまたはパスワードが違います。";
+  }
+};
 </script>
 
 <template>
@@ -70,13 +50,24 @@ onMounted(() => {
           <p class="no-login-message">{{ noLoginMessage }}</p>
           <div>
             <label for="email">メールアドレス</label>
-            <input type="email" v-model="email" name="email" @keydown.enter="nextFocus">
+            <input
+              type="email"
+              v-model="email"
+              name="email"
+              @keydown.enter="nextFocus"
+            />
           </div>
           <div>
             <label for="password">パスワード</label>
-            <input id="password" :type="show ? 'text' : 'password'" v-model="password" name="password" @keydown.enter="signIn">
+            <input
+              id="password"
+              :type="show ? 'text' : 'password'"
+              v-model="password"
+              name="password"
+              @keydown.enter="signIn"
+            />
             <button class="passView" @click="show = !show">
-              パスワードを{{ show ? '非表示に' : '表示' }}する
+              パスワードを{{ show ? "非表示に" : "表示" }}する
             </button>
           </div>
         </div>
@@ -92,88 +83,89 @@ onMounted(() => {
 </template>
 
 <style scoped>
-  .login-wrap {
-    max-width: 600px;
-    width: 90%;
-    height: 100vh;
-    margin: auto;
-    display: flex;
-    align-items: center;
-  }
+.login-wrap {
+  max-width: 600px;
+  width: 90%;
+  height: 100vh;
+  margin: auto;
+  display: flex;
+  align-items: center;
+}
+.center-card {
+  width: 100%;
+  max-height: 650px;
+  height: 90vh;
+  border-radius: 16px;
+  border: 1px solid #000;
+  padding: 20px;
+}
+.center-card h1 {
+  font-size: 30px;
+  padding: 0 60px;
+}
+.form-content {
+  margin-bottom: 20px;
+  padding: 0 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 85%;
+}
+.form-content div {
+  margin: 20px 0;
+}
+.center-card label {
+  display: block;
+  margin-bottom: 5px;
+}
+.center-card input {
+  height: 35px;
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #000;
+}
+.passView {
+  margin-top: 5px;
+  color: #000;
+  font-size: 14px;
+}
+.center-card .login,
+.center-card .new-account {
+  background: #000;
+  border-radius: 30px;
+  border: 2px solid #000;
+  color: #fff;
+  display: inline-block;
+  font-weight: bold;
+  font-size: 20px;
+  width: 100%;
+  height: 50px;
+}
+.center-card .login {
+  margin-bottom: 20px;
+}
+.center-card .new-account {
+  background: #fff;
+  color: #000;
+}
+.no-login-message {
+  color: #f00;
+  margin: 20px 0 30px;
+}
+
+@media (max-width: 699px) {
   .center-card {
-    width: 100%;
-    max-height: 650px;
-    height: 90vh;
-    border-radius: 16px;
-    border: 1px solid #000;
-    padding: 20px;
+    height: 70vh;
   }
   .center-card h1 {
-    font-size: 30px;
-    padding: 0 60px;
+    font-size: 20px;
+    padding: 0;
   }
   .form-content {
-    margin-bottom: 20px;
-    padding:0 60px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 85%;
-  }
-  .form-content div {
-    margin: 20px 0;
-  }
-  .center-card label {
-    display: block;
-    margin-bottom: 5px;
-  }
-  .center-card input {
-    height: 35px;
-    width: 100%;
-    border-radius: 4px;
-    border: 1px solid #000;
-  }
-  .passView {
-    margin-top: 5px;
-    color: #000;
-    font-size: 14px;
-  }
-  .center-card .login, .center-card .new-account {
-    background: #000;
-    border-radius: 30px;
-    border: 2px solid #000;
-    color: #fff;
-    display: inline-block;
-    font-weight: bold;
-    font-size: 20px;
-    width: 100%;
-    height: 50px;
+    padding: 0;
   }
   .center-card .login {
-    margin-bottom: 20px;
+    font-size: 18px;
   }
-  .center-card .new-account {
-    background: #fff;
-    color: #000;
-  }
-  .no-login-message {
-    color: #f00;
-    margin: 20px 0 30px;
-  }
-
-  @media (max-width: 699px) {
-    .center-card {
-      height: 70vh;
-    }
-    .center-card h1 {
-      font-size: 20px;
-      padding: 0;
-    }
-    .form-content {
-      padding: 0;
-    }
-    .center-card .login {
-      font-size: 18px;
-    }
-  }
+}
 </style>
