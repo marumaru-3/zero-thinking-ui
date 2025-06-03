@@ -1,7 +1,8 @@
 <script setup>
 import api from "@/libs/api";
+import { getUser } from "@/libs/auth";
 
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const email = ref("");
@@ -33,6 +34,9 @@ const signIn = async () => {
 
     const token = res.data.token;
     localStorage.setItem("token", token);
+
+    const user = await getUser();
+    console.log(user);
 
     router.push("/");
   } catch (error) {
