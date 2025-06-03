@@ -1,5 +1,5 @@
 <script setup>
-import api from "@/libs/api";
+import { api } from "@/libs/api";
 import { getUser } from "@/libs/auth";
 
 import { ref } from "vue";
