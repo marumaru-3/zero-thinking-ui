@@ -5,11 +5,7 @@ export const getUser = async () => {
   if (!token) return;
 
   try {
-    const res = await api.get("/api/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await api.get("/api/user");
     return res.data;
   } catch (error) {
     console.error("ユーザー情報取得失敗：", error);

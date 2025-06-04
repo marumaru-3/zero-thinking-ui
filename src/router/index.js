@@ -45,11 +45,7 @@ const isAuthenticated = async () => {
     const token = localStorage.getItem("token");
     if (!token) return false;
 
-    const res = await api.get("/api/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await api.get("/api/user");
 
     return Boolean(res.data);
   } catch (error) {
