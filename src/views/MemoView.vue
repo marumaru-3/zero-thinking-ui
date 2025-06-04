@@ -1,59 +1,55 @@
 <script setup>
-import { onMounted, ref, computed, watch, nextTick } from 'vue';
-import { RouterLink } from 'vue-router'
-import { db } from '../firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { api } from "@/libs/api";
+import { onMounted, ref, computed, watch, nextTick } from "vue";
+import { RouterLink } from "vue-router";
 
 // import Swiper JS
-import {Swiper, SwiperSlide} from 'swiper/vue';
-import { Navigation } from 'swiper/modules';
+import { Swiper, SwiperSlide } from "swiper/vue";
+import { Navigation } from "swiper/modules";
 // import Swiper styles
-import 'swiper/css';
-import 'swiper/css/navigation';
+import "swiper/css";
+import "swiper/css/navigation";
 // ナビゲーションで使うエレメントのクラスを指定
 const useNavigation = {
-  prevEl: '.use-prev',
-  nextEl: '.use-next'
-}
+  prevEl: ".use-prev",
+  nextEl: ".use-next",
+};
 
 // data
-const attTitle = ref("")
-const attList = ref([""])
-const list = ref([""])
-const listHeight = ref([""])
-const listIndex = ref(0)
-const height = ref("")
-const title = ref("")
-const min = ref(1)
-const sec = ref(0)
-const timerOn = ref(false)
-const timerObj = ref(null)
-const show = ref("")
+const attTitle = ref("");
+const attList = ref([""]);
+const list = ref([""]);
+const listHeight = ref([""]);
+const listIndex = ref(0);
+const height = ref("");
+const title = ref("");
+const min = ref(1);
+const sec = ref(0);
+const timerOn = ref(false);
+const timerObj = ref(null);
+const show = ref("");
 
-const memo = ref()
-const area = ref()
-const inputs = ref()
+const memo = ref();
+const area = ref();
+const inputs = ref();
 
-const memoModalWindow = ref("")
+const memoModalWindow = ref("");
 // computed
 const styles = computed(() => {
   return {
-    height: height.value
-  }
-})
+    height: height.value,
+  };
+});
 const formatTime = computed(() => {
-  let timeStrings = [min.value.toString(), sec.value.toString()].map(
-    (str) => {
-      if (str.length < 2) {
-        return "0" + str;
-      } else {
-        return str;
-      }
+  let timeStrings = [min.value.toString(), sec.value.toString()].map((str) => {
+    if (str.length < 2) {
+      return "0" + str;
+    } else {
+      return str;
     }
-  );
+  });
   return timeStrings[0] + ":" + timeStrings[1];
-})
+});
 const timerColor = computed(() => {
   if (min.value >= 1 || sec.value >= 20) {
     return "safe";
@@ -62,15 +58,18 @@ const timerColor = computed(() => {
   } else if (sec.value < 1) {
     return "end";
   }
-})
+});
 
 // watch
 watch(title, () => {
-  resize()
-})
-watch(() => [...list.value], () => {
-  resizeList(listIndex.value)
-})
+  resize();
+});
+watch(
+  () => [...list.value],
+  () => {
+    resizeList(listIndex.value);
+  }
+);
 
 // 今日の日付
 const dateFunc = () => {
@@ -80,43 +79,42 @@ const dateFunc = () => {
     now.getMonth() + 1 < 10 ? `0${now.getMonth() + 1}` : now.getMonth() + 1;
   const d = now.getDate() < 10 ? `0${now.getDate()}` : now.getDate();
   return y + "-" + m + "-" + d;
-}
-const date = ref(dateFunc())
+};
+const date = ref(dateFunc());
 
 const focus = (index) => {
   listIndex.value = index;
   resizeList(index);
-}
+};
 
 // 次のフォーカスに進む
 const focusNextInput = (index) => {
-  const nextInput =
-      memo.value.querySelectorAll("#list textarea")[index + 1];
+  const nextInput = memo.value.querySelectorAll("#list textarea")[index + 1];
   if (nextInput) {
     nextInput.focus();
   }
-}
+};
 
 // 予測変換を使用しているか
-const isComposing = ref(false)
-const onCompositionStart =() => {
-  isComposing.value = true
-}
+const isComposing = ref(false);
+const onCompositionStart = () => {
+  isComposing.value = true;
+};
 const onCompositionEnd = () => {
-    isComposing.value = false
-}
+  isComposing.value = false;
+};
 
 // タイトルから次のフォーカスに進む
 const titleNext = (index) => {
   if (!isComposing.value) {
     if (title.value.length > 0) {
-      focusNextInput(index)
-      attTitle.value = ""
+      focusNextInput(index);
+      attTitle.value = "";
     } else {
-      attTitle.value = "タイトルを入力してください。"
+      attTitle.value = "タイトルを入力してください。";
     }
   }
-}
+};
 
 // リストの追加と次のフォーカスに進む
 const addItem = (index) => {
@@ -136,16 +134,16 @@ const addItem = (index) => {
       attList.value[index] = "文字を入力してください。";
     }
   } else {
-    console.log('まだ次のフォーカスには進まないよ')
+    console.log("まだ次のフォーカスには進まないよ");
   }
-}
+};
 
 const resize = () => {
   height.value = "auto";
   nextTick(() => {
     height.value = area.value.scrollHeight + "px";
   });
-}
+};
 const resizeList = (index) => {
   listHeight.value[index] = "auto";
   nextTick(() => {
@@ -153,12 +151,12 @@ const resizeList = (index) => {
       listHeight.value[index] = inputs.value[index].scrollHeight + "px";
     }
   });
-}
+};
 const listStyles = (index) => {
   return {
-    height: listHeight.value[index]
-  }
-}
+    height: listHeight.value[index],
+  };
+};
 const count = () => {
   if (sec.value <= 0 && min.value >= 1) {
     min.value--;
@@ -168,31 +166,27 @@ const count = () => {
   } else {
     sec.value--;
   }
-}
+};
 const startInput = () => {
   if (timerOn.value === false) {
     start();
   }
-}
+};
 const start = () => {
-  // let self = this;
   timerObj.value = setInterval(() => count(), 1000);
   timerOn.value = true;
-}
-// const stop = () => {
-//   clearInterval(timerObj.value);
-//   timerOn.value = false;
-// }
+};
 const timerReset = () => {
   clearInterval(timerObj.value);
   timerOn.value = false;
   timerObj.value = null;
   min.value = 1;
   sec.value = 0;
-}
+};
 const complete = () => {
   clearInterval(timerObj.value);
-}
+};
+
 const submitConfirm = async () => {
   if (title.value.length === 0) {
     attTitle.value = "タイトルを入力してください。";
@@ -203,9 +197,7 @@ const submitConfirm = async () => {
     }
   } else if (list.value.length < 2 && list.value[0].length === 0) {
     attList.value[0] = "文字を入力してください。";
-    // console.log("none");
   } else {
-    // console.log("OK");
     list.value = list.value.filter((text, index) => {
       attList.value[index] = "";
       return text.length !== 0;
@@ -214,41 +206,37 @@ const submitConfirm = async () => {
       resizeList(index);
     });
 
-    // 入力されたデータをsetする（自動採番のため、積み重なる形で保存される）
-    // 非同期処理だから下の処理を待たせる
-    await addDoc(collection(db, "papers"), {
+    const res = await api.post("/api/papers", {
       title: title.value,
-      list: list.value,
+      body_list: list.value,
       date: date.value,
-      uid: getAuth().currentUser.uid,
-      timestamp: serverTimestamp(),
     });
+    // Laravelから返ってきたレスポンスを取得
+    console.log(res.data);
 
-    
     // 全ての処理が終わったらメモのフォームとタイマーリセット
     title.value = "";
     list.value = [""];
     timerReset();
-    // location.reload();
   }
-}
+};
 const showTime = () => {
   show.value === "show" ? (show.value = "") : (show.value = "show");
-}
+};
 
 // メモの使い方モーダル
 const memoModalOpen = () => {
   memoModalWindow.value = "open";
-}
+};
 const memoModalClose = () => {
   memoModalWindow.value = "";
-}
+};
 
 onMounted(() => {
   area.value.focus();
   resize();
   resizeList(listIndex.value);
-})
+});
 </script>
 
 <template>
@@ -290,7 +278,9 @@ onMounted(() => {
               <span class="title-border"></span>
               <span v-html="attTitle" class="att"></span>
             </h2>
-            <p><time>{{ date }}</time></p>
+            <p>
+              <time>{{ date }}</time>
+            </p>
           </div>
           <div class="paper_contents">
             <ul id="list">
@@ -298,9 +288,9 @@ onMounted(() => {
                 <div class="list-flex">
                   <span class="pointer">－</span>
                   <div class="list-input">
-                    <span class="input-text_dummy" :style="listStyles(index)"
-                      >{{ item }}</span
-                    >
+                    <span class="input-text_dummy" :style="listStyles(index)">{{
+                      item
+                    }}</span>
                     <textarea
                       rows="1"
                       type="text"
@@ -338,14 +328,20 @@ onMounted(() => {
               <swiper :modules="[Navigation]" :navigation="useNavigation">
                 <swiper-slide>
                   <picture>
-                    <source srcset="../assets/memo-ex/memo-ex01_sp.png" media="(max-width: 699px)">
-                    <img src="../assets/memo-ex/memo-ex01.png" alt="">
+                    <source
+                      srcset="../assets/memo-ex/memo-ex01_sp.png"
+                      media="(max-width: 699px)"
+                    />
+                    <img src="../assets/memo-ex/memo-ex01.png" alt="" />
                   </picture>
                 </swiper-slide>
                 <swiper-slide>
                   <picture>
-                    <source srcset="../assets/memo-ex/memo-ex02_sp.png" media="(max-width: 699px)">
-                    <img src="../assets/memo-ex/memo-ex02.png" alt="">
+                    <source
+                      srcset="../assets/memo-ex/memo-ex02_sp.png"
+                      media="(max-width: 699px)"
+                    />
+                    <img src="../assets/memo-ex/memo-ex02.png" alt="" />
                   </picture>
                 </swiper-slide>
               </swiper>
@@ -509,7 +505,8 @@ h2 .att {
   right: 10px;
   top: 42%;
 }
-.swiper-button-prev:after, .swiper-button-next:after {
+.swiper-button-prev:after,
+.swiper-button-next:after {
   color: #01e6d2;
   font-size: 40px;
 }
@@ -668,5 +665,4 @@ h2 .att {
   color: #fff;
 }
 /* ボタン end */
-
 </style>
