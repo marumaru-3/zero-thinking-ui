@@ -58,7 +58,7 @@ router.beforeEach(async (to, from, next) => {
     if (await isAuthenticated()) {
       next();
     } else {
-      next("/login");
+      next("/about");
     }
   } else {
     next();
