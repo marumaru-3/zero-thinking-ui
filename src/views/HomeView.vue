@@ -1,12 +1,9 @@
 <script setup>
 import { api } from "@/libs/api";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, nextTick } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { db } from "../firebase";
-import { doc, collection, deleteDoc, onSnapshot } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 
-const id = ref([]);
 const clickId = ref("");
 const deleteId = ref("");
 const modalWindow = ref("");
@@ -31,13 +28,12 @@ const getData = async () => {
   listObj.value = [];
   dateDevideArr.value = [];
 
-  listObj.value = resData.map((data, index) => {
+  listObj.value = resData.map((data) => {
     return {
+      id: data.id,
       title: data.title,
-      list: data.body_list,
+      body_list: data.body_list,
       date: data.date,
-      docId: data.id,
-      index,
     };
   });
 
@@ -46,10 +42,25 @@ const getData = async () => {
   dateListDevide();
 };
 
+// メモを削除する関数
 const delDoc = async (id) => {
   modalWindow.value = "delete";
   deleteId.value = id;
-  await deleteDoc(doc(db, "papers", id));
+  const res = await api.delete(`/api/papers/${id}`);
+
+  listObj.value = listObj.value.filter((obj) => obj.id !== deleteId.value);
+
+  // 日付ごとに分けたメモ配列を更新
+  dateDevideArr.value = [];
+  dateResult.value = deleteElement(listObj.value.map((obj) => obj.date));
+  dateListDevide();
+
+  nextTick(() => {
+    dateResult.value.forEach((v, i) => {
+      magicGridFunc(i);
+    });
+  });
+
   deleteMenuCss.value = null;
 };
 // 削除するボタンモーダル
@@ -87,7 +98,7 @@ const modalOpen = (id) => {
 
   // モーダルメモの中身を更新
   memoContent.value = listObj.value.filter(
-    (obj) => obj.index === clickId.value
+    (obj) => obj.id === clickId.value
   )[0];
 };
 const modalClose = () => {
@@ -146,30 +157,6 @@ onMounted(async () => {
     }
   });
 });
-
-// メモ削除用
-onSnapshot(collection(db, "papers"), (snapshot) => {
-  snapshot.docChanges().forEach((change) => {
-    if (change.type === "removed") {
-      // parersドキュメントが削除された場合
-      // listObjから削除したメモ配列を削除
-      const reList = listObj.value.filter((obj) => obj.docId !== change.doc.id);
-      listObj.value = [];
-      listObj.value = reList;
-
-      // 日付ごとに分けたメモ配列を更新
-      dateDevideArr.value = [];
-      dateResult.value = deleteElement(listObj.value.map((obj) => obj.date));
-      dateListDevide();
-
-      setTimeout(() => {
-        dateResult.value.forEach((v, i) => {
-          magicGridFunc(i);
-        });
-      }, 100);
-    }
-  });
-});
 </script>
 
 <template>
@@ -191,15 +178,15 @@ onSnapshot(collection(db, "papers"), (snapshot) => {
     <div class="memo-date-list" v-for="(date, asd) in dateResult">
       <h3 class="dateTitle">{{ date }}</h3>
       <div :class="`memo-group${asd}`">
-        <div v-for="(memo, index) in dateDevideArr[asd]">
+        <div v-for="memo in dateDevideArr[asd]">
           <div
             class="memo-content"
             :class="{
-              select: memo.index === clickId,
-              delete: id[memo.index] === deleteId,
+              select: memo.id === clickId,
+              delete: memo.id === deleteId,
             }"
-            :data-index="memo.index"
-            @click="modalOpen(memo.index, $event)"
+            :data-index="memo.id"
+            @click="modalOpen(memo.id, $event)"
           >
             <div class="check">
               <img src="../assets/icon/check.svg" alt="" />
@@ -207,7 +194,7 @@ onSnapshot(collection(db, "papers"), (snapshot) => {
             <div class="memo-inner">
               <p class="memo-title">{{ memo.title }}</p>
               <ul class="memo-list">
-                <li v-for="(list, listIndex) in memo.list">
+                <li v-for="list in memo.body_list">
                   <span class="pointer">－</span>{{ list }}
                 </li>
               </ul>
@@ -215,7 +202,7 @@ onSnapshot(collection(db, "papers"), (snapshot) => {
             <div class="memo-btn">
               <button
                 class="delete"
-                @click.stop="deleteMenuOpen(memo.index, $event)"
+                @click.stop="deleteMenuOpen(memo.id, $event)"
               >
                 <img src="../assets/icon/trashbox.svg" alt="" />
               </button>
@@ -237,7 +224,7 @@ onSnapshot(collection(db, "papers"), (snapshot) => {
               <p class="memo-date">{{ memoContent.date }}</p>
             </div>
             <ul class="memo-list">
-              <li v-for="(list, listIndex) in memoContent.list">
+              <li v-for="list in memoContent.body_list">
                 <span class="pointer">－</span>{{ list }}
               </li>
             </ul>
@@ -256,7 +243,7 @@ onSnapshot(collection(db, "papers"), (snapshot) => {
     </div>
     <!-- メモ削除モーダル -->
     <div class="delete-menu" :style="deleteMenuCss">
-      <p @click="delDoc(id[clickId])">メモを削除</p>
+      <p @click="delDoc(clickId)">メモを削除</p>
     </div>
   </main>
 </template>
