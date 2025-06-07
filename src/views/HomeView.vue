@@ -2,7 +2,6 @@
 import { api } from "@/libs/api";
 import { onMounted, ref, nextTick } from "vue";
 import { RouterLink, useRouter } from "vue-router";
-import { signOut } from "firebase/auth";
 
 const clickId = ref("");
 const deleteId = ref("");
@@ -13,7 +12,6 @@ const listObj = ref([]);
 const dateDevideArr = ref([]);
 
 const router = useRouter();
-const isLoggedIn = ref(false);
 
 const memoContent = ref("");
 
@@ -130,17 +128,17 @@ const magicGridFunc = (i) => {
 };
 
 // ログアウト用
-const handleSignOut = () => {
-  signOut(auth)
-    .then(() => {
-      router.push("/about");
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+const handleSignOut = async () => {
+  try {
+    const res = await api.post("/api/logout");
+    console.log(res.data);
+    localStorage.removeItem("token");
+    router.push("/about");
+  } catch (error) {
+    console.log(error);
+  }
 };
 
-let auth;
 onMounted(async () => {
   await getData();
   dateResult.value.forEach((v, i) => {
@@ -163,7 +161,7 @@ onMounted(async () => {
   <header>
     <div class="header-container">
       <h1><RouterLink to="/" class="memo-contents">0秒思考メモ</RouterLink></h1>
-      <button @click="handleSignOut" v-if="isLoggedIn">ログアウト</button>
+      <button @click="handleSignOut">ログアウト</button>
     </div>
   </header>
   <main id="app">
