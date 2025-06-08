@@ -1,7 +1,9 @@
 <script setup>
-import { api } from "@/libs/api";
+import { useApi } from "@/composables/useApi";
 import { onMounted, ref, nextTick } from "vue";
 import { RouterLink, useRouter } from "vue-router";
+
+const { getData, postData, deleteData } = useApi();
 
 const clickId = ref("");
 const deleteId = ref("");
@@ -19,9 +21,12 @@ const memoContent = ref("");
 const deleteMenuCss = ref(null);
 
 // メモ一覧取得
-const getData = async () => {
-  const res = await api.get("/api/papers");
-  const resData = res.data.data;
+const getMemos = async () => {
+  const res = await getData(
+    "/api/papers",
+    "メモの取得に失敗しました。再度お試しください。"
+  );
+  const resData = res.data;
 
   listObj.value = [];
   dateDevideArr.value = [];
@@ -41,10 +46,15 @@ const getData = async () => {
 };
 
 // メモを削除する関数
-const delDoc = async (id) => {
+const deleteMemo = async (id) => {
   modalWindow.value = "delete";
   deleteId.value = id;
-  const res = await api.delete(`/api/papers/${id}`);
+  const res = await deleteData(
+    `/api/papers/${id}`,
+    "メモの削除に失敗しました。再度お試しください。"
+  );
+
+  console.log(res);
 
   listObj.value = listObj.value.filter((obj) => obj.id !== deleteId.value);
 
@@ -129,18 +139,18 @@ const magicGridFunc = (i) => {
 
 // ログアウト用
 const handleSignOut = async () => {
-  try {
-    const res = await api.post("/api/logout");
-    console.log(res.data);
-    localStorage.removeItem("token");
-    router.push("/about");
-  } catch (error) {
-    console.log(error);
-  }
+  const res = await postData(
+    "/api/logout",
+    {},
+    "ログアウトに失敗しました。再度お試しください。"
+  );
+  console.log(res);
+  localStorage.removeItem("token");
+  router.push("/about");
 };
 
 onMounted(async () => {
-  await getData();
+  await getMemos();
   dateResult.value.forEach((v, i) => {
     magicGridFunc(i);
   });
@@ -241,7 +251,7 @@ onMounted(async () => {
     </div>
     <!-- メモ削除モーダル -->
     <div class="delete-menu" :style="deleteMenuCss">
-      <p @click="delDoc(clickId)">メモを削除</p>
+      <p @click="deleteMemo(clickId)">メモを削除</p>
     </div>
   </main>
 </template>

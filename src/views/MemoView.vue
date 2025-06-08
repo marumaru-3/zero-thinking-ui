@@ -1,5 +1,5 @@
 <script setup>
-import { api } from "@/libs/api";
+import { useApi } from "@/composables/useApi";
 import { onMounted, ref, computed, watch, nextTick } from "vue";
 import { RouterLink } from "vue-router";
 
@@ -9,6 +9,9 @@ import { Navigation } from "swiper/modules";
 // import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
+
+const { postData } = useApi();
+
 // ナビゲーションで使うエレメントのクラスを指定
 const useNavigation = {
   prevEl: ".use-prev",
@@ -206,13 +209,18 @@ const submitConfirm = async () => {
       resizeList(index);
     });
 
-    const res = await api.post("/api/papers", {
-      title: title.value,
-      body_list: list.value,
-      date: date.value,
-    });
+    // メモ登録処理
+    const res = await postData(
+      "/api/papers",
+      {
+        title: title.value,
+        body_list: list.value,
+        date: date.value,
+      },
+      "メモの保存に失敗しました。再度お試しください。"
+    );
     // Laravelから返ってきたレスポンスを取得
-    console.log(res.data);
+    console.log(res);
 
     // 全ての処理が終わったらメモのフォームとタイマーリセット
     title.value = "";

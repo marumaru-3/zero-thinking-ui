@@ -1,9 +1,11 @@
 <script setup>
-import { api } from "@/libs/api";
+import { useApi } from "@/composables/useApi";
 import { getUser } from "@/libs/auth";
 
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+
+const { postData } = useApi();
 
 const email = ref("");
 const password = ref("");
@@ -21,18 +23,23 @@ const nextFocus = () => {
   document.querySelector("#password").focus();
 };
 
-// サインイン処理
+// ログイン処理
 const signIn = async () => {
   // メールアドレスとパスワードが入力されているかを確認
   if (!email.value || !password.value) return;
 
   try {
-    const res = await api.post("/api/login", {
-      email: email.value,
-      password: password.value,
-    });
+    const res = await postData(
+      "/api/login",
+      {
+        email: email.value,
+        password: password.value,
+      },
+      "",
+      false
+    );
 
-    const token = res.data.token;
+    const token = res.token;
     localStorage.setItem("token", token);
 
     const user = await getUser();
@@ -40,7 +47,12 @@ const signIn = async () => {
 
     router.push("/");
   } catch (error) {
-    noLoginMessage.value = "メールアドレスまたはパスワードが違います。";
+    if (error.response?.status === 401) {
+      noLoginMessage.value = "メールアドレスまたはパスワードが違います。";
+    } else {
+      console.error("POSTエラー：", error);
+      alert("サーバーに接続できませんでした。");
+    }
   }
 };
 </script>
