@@ -1,59 +1,78 @@
 <script setup>
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-} from "firebase/auth"
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useApi } from "@/composables/useApi";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+
+const { postData } = useApi();
 
 const email = ref("");
 const password = ref("");
+const passwordConfirm = ref("");
 
-const router = useRouter()
+const router = useRouter();
 
 // パスワードの表示・非表示
-const show = ref(false)
+const showPassword = ref(false);
+const showConfirm = ref(false);
 
 // アカウントを作成出来なかったときのメッセージ
-const noRegisterMessage = ref("")
+const noRegisterMessage = ref("");
 
 // 次のフォーム(パスワード)にフォーカスを当てる
 const nextFocus = () => {
-    document.querySelector('#password').focus();
-}
+  const active = document.activeElement;
 
-// サインアップ処理
-const createAccount = () => {
+  if (active.id === "email") {
+    document.querySelector("#password").focus();
+  } else if (active.id === "password") {
+    document.querySelector("#passwordConfirm").focus();
+  }
+};
+
+// ユーザー登録処理
+const createAccount = async () => {
   // メールアドレスとパスワードが入力されているかを確認
-  if (email.value == "" || password.value == "") return;
-  const auth = getAuth();
-  createUserWithEmailAndPassword(auth, email.value, password.value)
-  .then((userCredential) => {
-    // 成功時処理
-    const user = userCredential.user;
-    // console.log(user);
-    // ログイン画面にリダイレクト
-    router.push("login");
-  })
-  .catch((error) => {
-    // 失敗時処理
-    // const errorCode = error.code;
-    // const errorMessage = error.message;
-    // console.log(errorCode, errorMessage);
+  if (email.value == "" || password.value == "" || passwordConfirm.value == "")
+    return;
 
+  try {
+    const res = await postData(
+      "/api/register",
+      {
+        email: email.value,
+        password: password.value,
+        password_confirmation: passwordConfirm.value,
+      },
+      "",
+      false
+    );
 
-    if (error.code === 'auth/email-already-in-use') {
-      noRegisterMessage.value = 'このメールアドレスはすでに使用されています。'
-    } else if (error.code === 'auth/weak-password') {
-      noRegisterMessage.value = 'パスワードは6文字以上に設定してください。'
-    }else if (error.code === 'auth/invalid-email') {
-      noRegisterMessage.value = 'メールアドレスが無効です。'
-    }else {
-      noRegisterMessage.value = 'メールアドレスもしくはパスワードが無効です。'
+    const token = res.token;
+    localStorage.setItem("token", token);
+
+    const user = await getUser();
+    console.log(user);
+
+    router.push("/");
+  } catch (error) {
+    const emailErrors = error.response?.data?.errors?.email || [];
+    const passwordErrors = error.response?.data?.errors?.password || [];
+
+    if (emailErrors.some((msg) => msg.includes("taken"))) {
+      noRegisterMessage.value = "このメールアドレスはすでに使用されています。";
+    } else if (emailErrors.some((msg) => msg.includes("valid email address"))) {
+      noRegisterMessage.value = "メールアドレスが無効です。";
+    } else if (
+      passwordErrors.some((msg) => msg.includes("least 8 characters"))
+    ) {
+      noRegisterMessage.value = "パスワードは8文字以上に設定してください。";
+    } else if (passwordErrors.some((msg) => msg.includes("confirmation"))) {
+      noRegisterMessage.value = "パスワード確認が異なっています。";
+    } else {
+      noRegisterMessage.value = "メールアドレスもしくはパスワードが無効です。";
     }
-
-  });
-}
+  }
+};
 </script>
 
 <template>
@@ -65,13 +84,38 @@ const createAccount = () => {
           <p class="no-register-message">{{ noRegisterMessage }}</p>
           <div>
             <label for="email">メールアドレス</label>
-            <input type="email" v-model="email" name="email" @keydown.enter="nextFocus">
+            <input
+              id="email"
+              type="email"
+              v-model="email"
+              name="email"
+              @keydown.enter="nextFocus"
+            />
           </div>
           <div>
             <label for="password">パスワード</label>
-            <input id="password" :type="show ? 'text' : 'password'" v-model="password" name="password" @keydown.enter="createAccount">
-            <button class="passView" @click="show = !show">
-              パスワードを{{ show ? '非表示に' : '表示' }}する
+            <input
+              id="password"
+              :type="showPassword ? 'text' : 'password'"
+              v-model="password"
+              name="password"
+              @keydown.enter="nextFocus"
+            />
+            <button class="passView" @click="showPassword = !showPassword">
+              パスワードを{{ showPassword ? "非表示に" : "表示" }}する
+            </button>
+          </div>
+          <div>
+            <label for="passwordConfirm">パスワード確認</label>
+            <input
+              id="passwordConfirm"
+              :type="showConfirm ? 'text' : 'password'"
+              v-model="passwordConfirm"
+              name="password_confirmation"
+              @keydown.enter="createAccount"
+            />
+            <button class="passView" @click="showConfirm = !showConfirm">
+              パスワードを{{ showConfirm ? "非表示に" : "表示" }}する
             </button>
           </div>
         </div>
@@ -82,80 +126,80 @@ const createAccount = () => {
 </template>
 
 <style scoped>
-  .register-wrap {
-    max-width: 600px;
-    width: 90%;
-    height: 100vh;
-    margin: auto;
-    display: flex;
-    align-items: center;
-  }
+.register-wrap {
+  max-width: 600px;
+  width: 90%;
+  height: 100vh;
+  margin: auto;
+  display: flex;
+  align-items: center;
+}
+.center-card {
+  width: 100%;
+  max-height: 650px;
+  height: 90vh;
+  border-radius: 16px;
+  border: 1px solid #000;
+  padding: 20px;
+}
+.center-card h1 {
+  font-size: 30px;
+  padding: 0 60px;
+}
+.form-content {
+  margin-bottom: 20px;
+  padding: 0 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 85%;
+}
+.form-content div {
+  margin: 20px 0;
+}
+.center-card label {
+  display: block;
+  margin-bottom: 5px;
+}
+.center-card input {
+  height: 35px;
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #000;
+}
+.passView {
+  margin-top: 5px;
+  color: #000;
+  font-size: 14px;
+}
+.center-card .register {
+  background: #000;
+  border-radius: 30px;
+  color: #fff;
+  display: inline-block;
+  font-weight: bold;
+  font-size: 20px;
+  width: 100%;
+  height: 50px;
+}
+.no-register-message {
+  color: #f00;
+  margin: 20px 0 30px;
+}
+
+@media (max-width: 699px) {
   .center-card {
-    width: 100%;
-    max-height: 650px;
-    height: 90vh;
-    border-radius: 16px;
-    border: 1px solid #000;
-    padding: 20px;
+    height: 70vh;
   }
   .center-card h1 {
-    font-size: 30px;
-    padding: 0 60px;
+    font-size: 20px;
+    padding: 0;
   }
   .form-content {
-    margin-bottom: 20px;
-    padding:0 60px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 85%;
-  }
-  .form-content div {
-    margin: 20px 0;
-  }
-  .center-card label {
-    display: block;
-    margin-bottom: 5px;
-  }
-  .center-card input {
-    height: 35px;
-    width: 100%;
-    border-radius: 4px;
-    border: 1px solid #000;
-  }
-  .passView {
-    margin-top: 5px;
-    color: #000;
-    font-size: 14px;
+    padding: 0;
   }
   .center-card .register {
-    background: #000;
-    border-radius: 30px;
-    color: #fff;
-    display: inline-block;
-    font-weight: bold;
-    font-size: 20px;
-    width: 100%;
-    height: 50px;
+    font-size: 18px;
   }
-  .no-register-message {
-    color: #f00;
-    margin: 20px 0 30px;
-  }
-
-  @media (max-width: 699px) {
-    .center-card {
-      height: 70vh;
-    }
-    .center-card h1 {
-      font-size: 20px;
-      padding: 0;
-    }
-    .form-content {
-      padding: 0;
-    }
-    .center-card .register {
-      font-size: 18px;
-    }
-  }
+}
 </style>
