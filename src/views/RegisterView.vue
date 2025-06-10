@@ -50,9 +50,6 @@ const createAccount = async () => {
     const token = res.token;
     localStorage.setItem("token", token);
 
-    const user = await getUser();
-    console.log(user);
-
     router.push("/");
   } catch (error) {
     const emailErrors = error.response?.data?.errors?.email || [];
@@ -69,7 +66,8 @@ const createAccount = async () => {
     } else if (passwordErrors.some((msg) => msg.includes("confirmation"))) {
       noRegisterMessage.value = "パスワード確認が異なっています。";
     } else {
-      noRegisterMessage.value = "メールアドレスもしくはパスワードが無効です。";
+      noRegisterMessage.value =
+        "予期せぬエラーが発生しました。時間をおいて再度お試しください。";
     }
   }
 };
