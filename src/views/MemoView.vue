@@ -251,7 +251,9 @@ onMounted(() => {
   <header>
     <div class="header-container">
       <h1><RouterLink to="/" class="memo-contents">0秒思考メモ</RouterLink></h1>
-      <button @click="memoModalOpen">メモの使い方</button>
+      <div class="header-buttons">
+        <button @click="memoModalOpen">メモの使い方</button>
+      </div>
     </div>
   </header>
   <main id="memo" ref="memo">
@@ -399,9 +401,6 @@ onMounted(() => {
 /* 全体 end */
 
 /* メモ start */
-.header-container button {
-  width: 130px;
-}
 #paper {
   border: 2px solid #e0e0e0;
   border-radius: 10px;

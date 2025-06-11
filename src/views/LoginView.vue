@@ -42,9 +42,6 @@ const signIn = async () => {
     const token = res.token;
     localStorage.setItem("token", token);
 
-    const user = await getUser();
-    console.log(user);
-
     router.push("/");
   } catch (error) {
     if (error.response?.status === 401) {

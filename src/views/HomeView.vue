@@ -149,6 +149,11 @@ const handleSignOut = async () => {
   router.push("/about");
 };
 
+// ユーザー情報リンク遷移
+const handleUserLink = () => {
+  router.push("/user");
+};
+
 onMounted(async () => {
   await getMemos();
   dateResult.value.forEach((v, i) => {
@@ -171,7 +176,10 @@ onMounted(async () => {
   <header>
     <div class="header-container">
       <h1><RouterLink to="/" class="memo-contents">0秒思考メモ</RouterLink></h1>
-      <button @click="handleSignOut">ログアウト</button>
+      <div class="header-buttons">
+        <button @click="handleUserLink">ユーザー情報</button>
+        <button @click="handleSignOut">ログアウト</button>
+      </div>
     </div>
   </header>
   <main id="app">
